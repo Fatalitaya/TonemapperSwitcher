@@ -1,0 +1,87 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#pragma once
+
+/*
+ * Minimal AgX v1 provider algorithm.
+ *
+ * This provider implements the analytic Minimal AgX approximation,
+ * not Blender's current OCIO/LUT-based AgX implementation.
+ *
+ * Algorithm basis: VanguardEngine ToneMapping.hlsli by Andrew Depke,
+ * Copyright (c) 2019-2022 Andrew Depke, MIT License. That file credits
+ * AgX to Troy Sobotka and the minimal implementation to Benjamin Wrensch.
+ * The Full MIT permission notice is included in the plugin NOTICE.md.
+ *
+ * v1 scope:
+ * - input is scene-referred AP1, bridged to linear Rec.709 by the common layer
+ * - Base/Default look only; no Punchy/Golden look stage is applied
+ * - no UE Filmic legacy controls are applied to this provider
+ */
+
+static const float AgXMinimalMinEV = -12.47393;
+static const float AgXMinimalMaxEV = 4.026069;
+static const float AgXMinimalLogEpsilon = 1e-10;
+
+/*
+ * AgX Minimal inset matrix.
+ * HLSL orientation from VanguardEngine: transposed from the OCIO reference so
+ * mul(matrix, vector) matches the original transform.
+ */
+static const float3x3 AgXMinimalInsetMatrix =
+{
+	0.842479062253094, 0.0784335999999992, 0.0792237451477643,
+	0.0423282422610123, 0.878468636469772, 0.0791661274605434,
+	0.0423756549057051, 0.0784336000000000, 0.879142973793104
+};
+
+/*
+ * AgX Minimal outset matrix.
+ * HLSL orientation from VanguardEngine; this is the inverse matrix, not the
+ * transpose of AgXMinimalInsetMatrix.
+ */
+static const float3x3 AgXMinimalOutsetMatrix =
+{
+	1.19687900512017, -0.0980208811401368, -0.0990297440797205,
+	-0.0528968517574562, 1.15190312990417, -0.0989611768448433,
+	-0.0529716355144438, -0.0980434501171241, 1.15107367264116
+};
+
+float3 TonemapperAgXDefaultContrast(float3 x)
+{
+	// 6th-order polynomial approximation of the AgX default sigmoid.
+	float3 x2 = x * x;
+	float3 x4 = x2 * x2;
+	return 15.5 * x4 * x2
+		- 40.14 * x4 * x
+		+ 31.96 * x4
+		- 6.868 * x2 * x
+		+ 0.4298 * x2
+		+ 0.1191 * x
+		- 0.00232;
+}
+
+float3 ApplyTonemapperAlgorithm(float3 ColorAP1)
+{
+	// The framework contract is scene-referred AP1. Minimal AgX operates on
+	// linear Rec.709/sRGB primaries, so bridge explicitly before and after.
+	float3 ColorLinearRec709 = TonemapperAP1ToLinearRec709(ColorAP1);
+	ColorLinearRec709 = max(ColorLinearRec709, 0.0);
+
+	float3 InsetColor = mul(AgXMinimalInsetMatrix, ColorLinearRec709);
+	float3 LogColor = clamp(
+		log2(max(InsetColor, AgXMinimalLogEpsilon)),
+		AgXMinimalMinEV,
+		AgXMinimalMaxEV);
+	float3 Normalized = (LogColor - AgXMinimalMinEV) / (AgXMinimalMaxEV - AgXMinimalMinEV);
+
+	// Base/Default look only. Future look transforms are intentionally omitted.
+	float3 DisplaySignal = TonemapperAgXDefaultContrast(Normalized);
+	float3 OutsetColor = mul(AgXMinimalOutsetMatrix, DisplaySignal);
+
+	// AgX outputs an sRGB/display signal; undo that EOTF so the common UE layer
+	// receives display-linear Rec.709 and can continue with user LUT/output encoding.
+	float3 DisplayLinearRec709 = pow(max(OutsetColor, 0.0), 2.2);
+
+	return TonemapperLinearRec709ToAP1(DisplayLinearRec709);
+}

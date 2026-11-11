@@ -1,0 +1,17 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "TonemapperSwithcer",
+  "Description": "Pure plugin desktop SDR AgX tonemapper for Unreal Engine 5.8.3.",
+  "Category": "Rendering",
+  "EnabledByDefault": true,
+  "CanContainContent": false,
+  "Modules": [
+    {
+      "Name": "TonemapperSwithcer",
+      "Type": "Runtime",
+      "LoadingPhase": "PostConfigInit"
+    }
+  ]
+}

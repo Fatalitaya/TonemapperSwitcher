@@ -1,0 +1,38 @@
+# Notice
+
+The Minimal AgX algorithm constants, matrices, log range, and default contrast
+polynomial in `Shaders/Private/TonemapperAgX.ush` are based on the MIT-licensed
+HLSL implementation in:
+
+    https://github.com/adepke/VanguardEngine
+    VanguardEngine/Shaders/ToneMapping.hlsli
+    commit 04eb139c1fd3e93be6cd966bb03e5f5e8817dfd5
+
+That implementation credits AgX to Troy Sobotka and the minimal implementation
+to Benjamin Wrensch. The VanguardEngine MIT License follows:
+
+```
+MIT License
+
+Copyright (c) 2019-2022 Andrew Depke
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+Native pass code and shaders are adapted from Unreal Engine 5.8.3. Epic Games copyright and Unreal Engine license terms continue to apply to those portions; the root MIT license does not relicense Epic code.

@@ -1,0 +1,22 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/PostProcessCommon.ush"
+#include "/Engine/Private/TonemapCommon.ush"
+
+#include "TonemapperOuterLUTCommon.ush"
+#include "TonemapperAgX.ush"
+
+float InvLUTSizeMinusOne;
+RWTexture3D<float4> RWOutputTexture;
+
+[numthreads(THREADGROUP_SIZE, THREADGROUP_SIZE, THREADGROUP_SIZE)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+	uint Width, Height, Depth;
+	RWOutputTexture.GetDimensions(Width, Height, Depth);
+	if (any(DispatchThreadId >= uint3(Width, Height, Depth))) return;
+	float3 LUTEncodedColor = (float3)DispatchThreadId * InvLUTSizeMinusOne;
+	float4 OutColor = CombineTonemapperOuterLUT(LUTEncodedColor);
+	RWOutputTexture[DispatchThreadId] = OutColor;
+}
